@@ -2,7 +2,7 @@
 
 Консольная утилита для тренировки скорости и точности слепой печати
 
-![screencast](docs/typing.mp4)
+![screencast](docs/typing.gif)
 
 ## Возможности
 
