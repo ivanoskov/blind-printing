@@ -46,9 +46,6 @@ void TypingSession::start() {
             }
         }
         
-        // Отображаем клавиатуру до начала ввода
-        displayKeyboard(wtext[0], is_russian);
-        
         wint_t ch = console_.getChar();
         if (ch == 27 || ch == 'q' || ch == 'Q') {
             break;
@@ -63,12 +60,11 @@ void TypingSession::start() {
         int text_y = height / 2;
         int text_x = (width - wtext.length()) / 2;
         
-        // Отображаем текст только один раз в начале
-        if (currentPos == 0) {
-            console_.moveCursor(text_y, text_x);
-            console_.setColor(ConsoleHandler::COLOR_UNTYPED);
-            console_.displayText(text);
-        }
+        // Отображаем текст и клавиатуру после начала
+        console_.moveCursor(text_y, text_x);
+        console_.setColor(ConsoleHandler::COLOR_UNTYPED);
+        console_.displayText(text);
+        displayKeyboard(wtext[currentPos], is_russian);
         
         while (currentPos < wtext.length()) {
             console_.moveCursor(text_y, text_x + currentPos);
@@ -96,7 +92,7 @@ void TypingSession::start() {
                 console_.displayText(current_char);
                 currentPos++;
                 
-                // Подсвечиваем следующий символ
+                // Подсвечиваем следующий симв
                 if (currentPos < wtext.length()) {
                     console_.moveCursor(text_y, text_x + currentPos);
                     console_.setColor(ConsoleHandler::COLOR_CURRENT);
@@ -135,7 +131,7 @@ void TypingSession::start() {
             choice = console_.getChar();
         } while (choice != '\n' && choice != 27 && choice != 'q' && choice != 'Q');
         
-        if (choice == 27 || choice == 'q' || choice == 'Q') {
+        if (choice == 27) {
             break;
         }
     }
@@ -157,7 +153,10 @@ void TypingSession::displayRealtimeStats(int errors, int totalChars,
         "Ошибки: " + std::to_string(errors) + " | " +
         "Прогресс: " + std::to_string(progress) + "%";
     
-    console_.displayTextCentered(stats, 5);
+    auto [height, width] = console_.getScreenSize();
+    console_.setColor(ConsoleHandler::COLOR_UNTYPED);
+    console_.displayTextCentered(stats, height - 6);
+    console_.resetColor();
 }
 
 void TypingSession::displayErrorChar(int y, int x, char expected) {
@@ -183,7 +182,7 @@ void TypingSession::displayStats(int errors, int totalChars, std::chrono::second
     
     std::vector<std::string> stats = {
         "Результаты:",
-        "Скорость: " + std::to_string(cpm).substr(0, std::to_string(cpm).find(".") + 2) + " символов в минуту",
+        "Соость: " + std::to_string(cpm).substr(0, std::to_string(cpm).find(".") + 2) + " символов в минуту",
         "Точность: " + std::to_string(accuracy).substr(0, std::to_string(accuracy).find(".") + 2) + "%",
         "Ошибки: " + std::to_string(errors),
         "Время: " + std::to_string(duration.count()) + " секунд"
@@ -203,7 +202,8 @@ double TypingSession::calculateCPM(int totalChars, std::chrono::seconds duration
 }
 
 double TypingSession::calculateAccuracy(int errors, int totalChars) {
-    return 100.0 * (1.0 - static_cast<double>(errors) / totalChars);
+    int limited_errors = std::min(errors, totalChars);
+    return 100.0 * (1.0 - static_cast<double>(limited_errors) / totalChars);
 }
 
 // Добавляем вспомогательную функцию для конвертации wchar_t в UTF-8 string
@@ -228,23 +228,23 @@ bool TypingSession::isEnglishLetter(wchar_t c) {
 void TypingSession::displayKeyboard(wchar_t currentChar, bool is_russian) {
     // Определяем раскладки с фиксированными позициями
     const std::vector<std::pair<std::string, int>> ru_row1 = {
-        {"Й",2}, {"Ц",6}, {"У",10}, {"К",14}, {"Е",18}, {"Н",22}, {"Г",26}, {"Ш",30}, {"Щ",34}, {"З",38}, {"Х",42}, {"Ъ",46}
+        {"Й",3}, {"Ц",6}, {"У",9}, {"К",12}, {"Е",15}, {"Н",18}, {"Г",21}, {"Ш",24}, {"Щ",27}, {"З",30}, {"Х",33}, {"Ъ",36}
     };
     const std::vector<std::pair<std::string, int>> ru_row2 = {
-        {"Ф",4}, {"Ы",8}, {"В",12}, {"А",16}, {"П",20}, {"Р",24}, {"О",28}, {"Л",32}, {"Д",36}, {"Ж",40}, {"Э",44}
+        {"Ф",5}, {"Ы",8}, {"В",11}, {"А",14}, {"П",17}, {"Р",20}, {"О",23}, {"Л",26}, {"Д",29}, {"Ж",32}, {"Э",35}
     };
     const std::vector<std::pair<std::string, int>> ru_row3 = {
-        {"Я",6}, {"Ч",10}, {"С",14}, {"М",18}, {"И",22}, {"Т",26}, {"Ь",30}, {"Б",34}, {"Ю",38}
+        {"Я",7}, {"Ч",10}, {"С",13}, {"М",16}, {"И",19}, {"Т",22}, {"Ь",25}, {"Б",28}, {"Ю",31},  {".",34}
     };
     
     const std::vector<std::pair<std::string, int>> en_row1 = {
-        {"Q",2}, {"W",6}, {"E",10}, {"R",14}, {"T",18}, {"Y",22}, {"U",26}, {"I",30}, {"O",34}, {"P",38}, {"[",42}, {"]",46}
+        {"Q",3}, {"W",6}, {"E",9}, {"R",12}, {"T",15}, {"Y",18}, {"U",21}, {"I",24}, {"O",27}, {"P",30}, {"[",33}, {"]",36}
     };
     const std::vector<std::pair<std::string, int>> en_row2 = {
-        {"A",4}, {"S",8}, {"D",12}, {"F",16}, {"G",20}, {"H",24}, {"J",28}, {"K",32}, {"L",36}, {";",40}, {"'",44}
+        {"A",5}, {"S",8}, {"D",11}, {"F",14}, {"G",17}, {"H",20}, {"J",23}, {"K",26}, {"L",29}, {";",32}, {"'",35}
     };
     const std::vector<std::pair<std::string, int>> en_row3 = {
-        {"Z",6}, {"X",10}, {"C",14}, {"V",18}, {"B",22}, {"N",26}, {"M",30}, {",",34}, {".",38}
+        {"Z",7}, {"X",10}, {"C",13}, {"V",16}, {"B",19}, {"N",22}, {"M",25}, {",",28}, {".",31}, {"/",34}
     };
     
     auto& row1 = is_russian ? ru_row1 : en_row1;
@@ -253,28 +253,31 @@ void TypingSession::displayKeyboard(wchar_t currentChar, bool is_russian) {
     
     // Получаем позицию для отображения клавиатуры
     auto [height, width] = console_.getScreenSize();
-    int keyboard_y = height - 8;
-    int start_x = (width - 50) / 2;
+    int keyboard_y = height - 10;
+    
+    // Увеличиваем ширину рамки
+    int frame_width = 44;
+    int start_x = (width - frame_width) / 2;
     
     // Рисуем рамку со скругленными углами
     console_.setColor(ConsoleHandler::COLOR_UNTYPED);
     console_.moveCursor(keyboard_y, start_x);
-    console_.displayText("╭────────────────────────────────────────────────╮");
+    console_.displayText("╭──────────────────────────────────────────╮");
     
     for (int i = 1; i < 4; i++) {
         console_.moveCursor(keyboard_y + i, start_x);
         console_.displayText("│");
-        console_.moveCursor(keyboard_y + i, start_x + 49);
+        console_.moveCursor(keyboard_y + i, start_x + frame_width - 1);
         console_.displayText("│");
     }
     
     console_.moveCursor(keyboard_y + 4, start_x);
-    console_.displayText("╰────────────────────────────────────────────────╯");
+    console_.displayText("╰──────────────────────────────────────────╯");
     
     // Функция для отрисовки ряда клавиш
     auto drawRow = [&](const std::vector<std::pair<std::string, int>>& row, int y) {
         for (const auto& [key, x] : row) {
-            console_.moveCursor(y, start_x + x);
+            console_.moveCursor(y, start_x + x + 2);
             console_.displayText(key);
         }
     };
@@ -287,23 +290,18 @@ void TypingSession::displayKeyboard(wchar_t currentChar, bool is_russian) {
     
     // Подсвечиваем текущую клавишу
     std::string current = wcharToUtf8(std::towupper(currentChar));
+    
     for (const auto& rows : {row1, row2, row3}) {
         for (const auto& [key, x] : rows) {
             if (key == current) {
                 int y = keyboard_y + (rows == row1 ? 1 : rows == row2 ? 2 : 3);
-                console_.moveCursor(y, start_x + x);
+                console_.moveCursor(y, start_x + x + 2);
                 console_.setColor(ConsoleHandler::COLOR_CURRENT);
                 console_.displayText(key);
                 break;
             }
         }
     }
-    
-    // Отображаем индикатор раскладки
-    std::string layout_indicator = is_russian ? "[RU]" : "[EN]";
-    console_.setColor(ConsoleHandler::COLOR_UNTYPED);
-    console_.moveCursor(keyboard_y + 5, (width - layout_indicator.length()) / 2);
-    console_.displayText(layout_indicator);
     
     console_.resetColor();
 } 

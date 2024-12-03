@@ -8,7 +8,7 @@ DATA_DIR = data
 
 SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
 OBJECTS = $(SOURCES:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
-TARGET = typing_trainer
+TARGET = typing
 
 .PHONY: all clean setup
 
