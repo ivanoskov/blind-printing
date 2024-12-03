@@ -23,4 +23,8 @@ private:
     double calculateCurrentCPM(int chars, const std::chrono::steady_clock::time_point& startTime);
     double calculateAccuracy(int errors, int totalChars);
     std::string wcharToUtf8(wchar_t wc);
+    void displayKeyboard(wchar_t currentChar);
+    bool isRussianLetter(wchar_t c);
+    bool isEnglishLetter(wchar_t c);
+    void displayKeyboard(wchar_t currentChar, bool is_russian);
 }; 
