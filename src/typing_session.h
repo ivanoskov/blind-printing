@@ -19,8 +19,8 @@ private:
     void displayErrorChar(int y, int x, char expected);
     void displayStats(int errors, int totalChars, 
                      std::chrono::seconds duration);
-    double calculateWPM(int totalChars, std::chrono::seconds duration);
+    double calculateCPM(int totalChars, std::chrono::seconds duration);
+    double calculateCurrentCPM(int chars, const std::chrono::steady_clock::time_point& startTime);
     double calculateAccuracy(int errors, int totalChars);
-    double calculateCurrentWPM(int chars, const std::chrono::steady_clock::time_point& startTime);
     std::string wcharToUtf8(wchar_t wc);
 }; 

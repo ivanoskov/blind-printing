@@ -75,20 +75,32 @@ void TypingSession::start() {
             
             // Сравниваем символы с приведением типов
             if (static_cast<wchar_t>(input) == current_wchar) {
+                // При правильном вводе
                 console_.moveCursor(text_y, text_x + currentPos);
                 console_.setColor(ConsoleHandler::COLOR_TYPED);
                 console_.displayText(current_char);
                 currentPos++;
                 
+                // Подсвечиваем следующий символ
                 if (currentPos < wtext.length()) {
                     console_.moveCursor(text_y, text_x + currentPos);
                     console_.setColor(ConsoleHandler::COLOR_CURRENT);
                     console_.displayText(wcharToUtf8(wtext[currentPos]));
                 }
             } else {
+                // При ошибке подсвечиваем текущий символ красным
+                console_.moveCursor(text_y, text_x + currentPos);
                 console_.setColor(ConsoleHandler::COLOR_ERROR);
                 console_.displayText(current_char);
-                console_.resetColor();
+                
+                // Небольшая пауза для отображения ошибки
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                
+                // Возвращаем подсветку текущего символа
+                console_.moveCursor(text_y, text_x + currentPos);
+                console_.setColor(ConsoleHandler::COLOR_CURRENT);
+                console_.displayText(current_char);
+                
                 errors++;
             }
             
@@ -115,19 +127,20 @@ void TypingSession::start() {
 void TypingSession::displayRealtimeStats(int errors, int totalChars, 
                                        std::chrono::steady_clock::time_point startTime,
                                        size_t currentPos) {
-    auto [height, width] = console_.getScreenSize();
-    int stats_y = height * 3 / 4;  // 75% от высоты экрана
+    auto now = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - startTime);
     
-    double current_wpm = calculateCurrentWPM(currentPos, startTime);
+    double current_cpm = calculateCurrentCPM(currentPos, startTime);
     double accuracy = calculateAccuracy(errors, currentPos > 0 ? currentPos : 1);
     int progress = static_cast<int>((currentPos * 100.0) / totalChars);
     
-    std::string stats = "Скорость: " + std::to_string(static_cast<int>(current_wpm)) + 
-                       " сл/мин | Точность: " + std::to_string(static_cast<int>(accuracy)) + 
-                       "% | Ошибки: " + std::to_string(errors) +
-                       " | Прогресс: " + std::to_string(progress) + "%";
+    std::string stats = 
+        "Скорость: " + std::to_string(current_cpm).substr(0, std::to_string(current_cpm).find(".") + 2) + " сим/мин | " +
+        "Точность: " + std::to_string(accuracy).substr(0, std::to_string(accuracy).find(".") + 2) + "% | " +
+        "Ошибки: " + std::to_string(errors) + " | " +
+        "Прогресс: " + std::to_string(progress) + "%";
     
-    console_.displayTextCentered(stats, stats_y - height/2);
+    console_.displayTextCentered(stats, 5);
 }
 
 void TypingSession::displayErrorChar(int y, int x, char expected) {
@@ -137,38 +150,39 @@ void TypingSession::displayErrorChar(int y, int x, char expected) {
     console_.resetColor();
 }
 
-double TypingSession::calculateCurrentWPM(int chars, const std::chrono::steady_clock::time_point& startTime) {
+double TypingSession::calculateCurrentCPM(int chars, const std::chrono::steady_clock::time_point& startTime) {
     auto now = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - startTime);
     double minutes = duration.count() / 60.0;
     if (minutes < 0.0001) return 0.0;
-    return (chars / 5.0) / minutes;  // 5 символов = 1 слово
+    return chars / minutes;
 }
 
 void TypingSession::displayStats(int errors, int totalChars, std::chrono::seconds duration) {
     console_.clearScreen();
     
-    int y_offset = -2;
+    double cpm = calculateCPM(totalChars, duration);
+    double accuracy = calculateAccuracy(errors, totalChars);
     
     std::vector<std::string> stats = {
         "Результаты:",
-        "Скорость: " + std::to_string(static_cast<int>(calculateWPM(totalChars, duration))) + " слов в минуту",
-        "Точность: " + std::to_string(static_cast<int>(calculateAccuracy(errors, totalChars))) + "%",
+        "Скорость: " + std::to_string(cpm).substr(0, std::to_string(cpm).find(".") + 2) + " символов в минуту",
+        "Точность: " + std::to_string(accuracy).substr(0, std::to_string(accuracy).find(".") + 2) + "%",
         "Ошибки: " + std::to_string(errors),
-        "Время: " + std::to_string(duration.count()) + " секунд",
-        "",
-        "Нажмите ENTER для продолжения или ESC/Q для выхода..."
+        "Время: " + std::to_string(duration.count()) + " секунд"
     };
     
-    for (const auto& line : stats) {
-        console_.displayTextCentered(line, y_offset++);
+    // Отображаем статистику с одинаковым отступом
+    const int startY = -4;
+    for (size_t i = 0; i < stats.size(); ++i) {
+        console_.displayTextCentered(stats[i], startY + i);
     }
 }
 
-double TypingSession::calculateWPM(int totalChars, std::chrono::seconds duration) {
-    const int CHARS_PER_WORD = 5;
+double TypingSession::calculateCPM(int totalChars, std::chrono::seconds duration) {
     double minutes = duration.count() / 60.0;
-    return (totalChars / CHARS_PER_WORD) / minutes;
+    if (minutes < 0.0001) return 0.0;
+    return totalChars / minutes;
 }
 
 double TypingSession::calculateAccuracy(int errors, int totalChars) {
