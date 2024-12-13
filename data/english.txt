@@ -1,0 +1,20 @@
+Programming is the art of organizing complexity.
+Simplicity is a prerequisite for reliability.
+Perfection is achieved not when there is nothing more to add, but when there is nothing left to take away.
+Premature optimization is the root of all evil.
+Code readability is more important than writing speed.
+Any problem can be solved by adding another level of indirection.
+Debugging is twice as hard as writing the code.
+Good code is its own best documentation.
+If you can't explain something simply, you don't understand it well enough.
+The beauty of code lies in its simplicity and elegance.
+Testing can show the presence of bugs but not their absence.
+Code is written once but read many times.
+Better to have working code today than perfect code tomorrow.
+A good programmer writes code that others can understand.
+Clean code always looks like it was written by someone who cares.
+Complexity is what we don't fully understand yet.
+Any program is obsolete as soon as it is created.
+Proper naming is the art of programming.
+Comments should explain 'why', not 'what'.
+Refactoring is the process of improving code without changing its behavior.

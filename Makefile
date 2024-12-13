@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -Wall -Wextra -std=c++17 -D_XOPEN_SOURCE_EXTENDED
-LDFLAGS = -lncursesw
+LDFLAGS = -lncursesw -lstdc++fs
 
 SRC_DIR = src
 BUILD_DIR = build
